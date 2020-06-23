@@ -38,26 +38,44 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
 
+def isfloat(value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
 
 class Split(beam.DoFn):
     def process(self, element, header_array):
-        Feature_list = element.split(",")
+        Feature_list_raw = element.split(",")
+        Feature_list = []
+        i = 0
+        while(i < len(Feature_list_raw)):
+            if(i == 2):
+                Feature_list.append(str(Feature_list_raw[i] + Feature_list_raw[i + 1]))
+                i += 2
+            else:
+                Feature_list.append(Feature_list_raw[i])
+                i += 1
+            
         Output = {}
-        for i in range(len(header_array)):
-            Output[header_array[i]] = Feature_list[i]
+        for j in range(len(header_array)):
+            if(Feature_list[j] == "" or Feature_list[j] == " "):
+                Output[header_array[j]] = "?"
+            else:
+                Output[header_array[j]] = Feature_list[j]
         return [Output]
+        
         
 class Collect(beam.DoFn):
     def process(self, element):
-        # Returns a list of tuples containing Date and Open value
+        # Returns a list of tuples containing feature, feature values and feature type
         result = []
         for feature in element:
-            if(element[feature].isnumeric()):
+            if(isfloat(element[feature])):
                 result.append((feature,element[feature],'Numeric'))
-            elif(element[feature] != " "):
+            elif(element[feature] != "?"):
                 result.append((feature,element[feature],'String'))
-            else:
-                print("nmsl")
                 
         return result
 
@@ -87,6 +105,7 @@ def data_type_reference(argv=None, save_main_session=True):
   p = beam.Pipeline(options=pipeline_options)
   
   raw_header = pd.read_csv(known_args.input,header=None,nrows=1)
+  print(raw_header)
   header_array = []
   for i in range(raw_header.shape[1]):
     header_array.append(raw_header.iloc[0,i])
@@ -108,9 +127,10 @@ def data_type_reference(argv=None, save_main_session=True):
     
   def feature_reference(value_counts):
     (index,counts,type) = value_counts
+    print((index,counts,type))
     if(counts == 2):
         return (index,"Boolean")
-    elif(counts >= 2 and counts <= 15 and type!="Numeric"):
+    elif(counts > 2 and counts <= 15):
         return (index,"Categorical")
     elif(type == "Numeric"):
         return (index,"Numeric")
@@ -125,8 +145,6 @@ def data_type_reference(argv=None, save_main_session=True):
   "Map Result" >> beam.Map(feature_reference)
   )
 
-  
-  
   output = (
     type_reference | beam.io.WriteToText(known_args.output)
   )
@@ -136,20 +154,22 @@ def data_type_reference(argv=None, save_main_session=True):
   
   return known_args
   
-def extract_column_names(datatype_array):
+def extract_column_names(datatype_array,label_name):
     category = []
     numeric = []
     string_arr = []
-    label = datatype_array[-1] 
     
-    for i in datatype_array[0:-1]:
+    for i in datatype_array:
         (column_name,columntype) = i
-        if(columntype == 'Boolean' or columntype == 'Categorical'):
-            category.append(column_name)
-        elif(columntype == 'String'):
-            string_arr.append(column_name)
+        if(column_name != label_name):
+            if(columntype == 'Boolean' or columntype == 'Categorical'):
+                category.append(column_name)
+            elif(columntype == 'String'):
+                string_arr.append(column_name)
+            else:
+                numeric.append(column_name)
         else:
-            numeric.append(column_name)
+            label = (column_name,columntype)
             
     return category,numeric,string_arr,label
 
@@ -273,13 +293,12 @@ def transform_data(known_args, column_name_arr):
           transformed_data
           | 'EncodeTrainData' >> beam.Map(transformed_data_coder.encode)
           | 'WriteTrainData' >> beam.io.WriteToTFRecord(
-              str(known_args.output + "_transformed")))
+              known_args.output + "_transform"))
               
 
   
 if __name__ == '__main__':
-  logging.getLogger().setLevel(logging.INFO)
-  
+  # logging.getLogger().setLevel(logging.INFO)
   known_args = data_type_reference()
   datatype_filepath = str(known_args.output + "-00000-of-00001")
   
@@ -292,17 +311,24 @@ if __name__ == '__main__':
         tmp[0] = str(tmp[0][2:-1])
         tmp[1] = str(tmp[1][2:-2])
         datatype_arr.append((tmp[0], tmp[1]))
+  
+  # Get label column name and column name array
+  raw_header = pd.read_csv(known_args.input,header=None,nrows=1)
+  column_name_arr = []
+  for i in range(raw_header.shape[1]):
+    column_name_arr.append(raw_header.iloc[0,i])
+    
+  label_name = raw_header.iloc[0,-1]
 
-  # Column name array
-  column_name_arr = [i[0] for i in datatype_arr]
   # Extract column names and put them in different lists based on their feature types
-  CATEGORICAL_FEATURE_KEYS,NUMERIC_FEATURE_KEYS,STRING_FEATURES_KEYS,label = extract_column_names(datatype_arr)
+  CATEGORICAL_FEATURE_KEYS,NUMERIC_FEATURE_KEYS,STRING_FEATURES_KEYS,label = extract_column_names(datatype_arr,label_name)
   (LABEL_KEY,LABEL_TYPE) = label
   print(CATEGORICAL_FEATURE_KEYS)
   print(NUMERIC_FEATURE_KEYS)
   print(STRING_FEATURES_KEYS)
   print(LABEL_KEY)
   
+  # Define data schema
   RAW_DATA_FEATURE_SPEC = dict(
     [(name, tf.io.FixedLenFeature([], tf.string))
      for name in CATEGORICAL_FEATURE_KEYS] +
@@ -315,15 +341,19 @@ if __name__ == '__main__':
   RAW_DATA_METADATA = tft.tf_metadata.dataset_metadata.DatasetMetadata(
     tft.tf_metadata.dataset_schema.schema_utils.schema_from_feature_spec(RAW_DATA_FEATURE_SPEC))
     
+    
   # TRANSFORMED_TRAIN_DATA_FILEBASE = 'train_transformed'
   # TRANSFORMED_TEST_DATA_FILEBASE = 'test_transformed'
     
   transform_data(known_args,column_name_arr)
   
-  filenames = [str(known_args.output + "_transformed-00000-of-00001")]
+  filenames = [str(known_args.output + "_transform-00000-of-00001")]
   raw_dataset = tf.data.TFRecordDataset(filenames)
+  
+  
   for raw_record in raw_dataset.take(1):
     example = tf.train.Example()
+    print(example)
     example.ParseFromString(raw_record.numpy())
     print(example)
     
