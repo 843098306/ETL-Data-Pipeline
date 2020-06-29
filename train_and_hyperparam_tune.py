@@ -47,11 +47,14 @@ class MyHyperModel(HyperModel):
     def build(self, hp):
         # model build with hyperparameter tuning on all layers. Can be customized
         model = keras.Sequential()
+        
         model.add(layers.Dense(units=hp.Int('units',
                                             min_value=32,
                                             max_value=512,
                                             step=32),
-                                            activation='relu',input_shape=self.input_shape))
+                                            input_shape=self.input_shape))
+        model.add(layers.normalization.BatchNormalization())
+        model.add(layers.Activation("relu"))
         model.add(
             layers.Dropout(
                 rate=hp.Float(
@@ -59,23 +62,15 @@ class MyHyperModel(HyperModel):
                 )
             )
         )
+        
+        
         model.add(layers.Dense(units=hp.Int('units',
                                             min_value=32,
                                             max_value=512,
                                             step=32),
-                                            activation='relu'))
-        model.add(
-            layers.Dropout(
-                rate=hp.Float(
-                    "dropout_1", min_value=0.0, max_value=0.5, default=0.25, step=0.01,
-                )
-            )
-        )
-        model.add(layers.Dense(units=hp.Int('units',
-                                            min_value=32,
-                                            max_value=512,
-                                            step=32),
-                                            activation='relu'))
+                                            input_shape=self.input_shape))
+        model.add(layers.normalization.BatchNormalization())
+        model.add(layers.Activation("relu"))
         model.add(
             layers.Dropout(
                 rate=hp.Float(
@@ -88,7 +83,9 @@ class MyHyperModel(HyperModel):
                                             min_value=32,
                                             max_value=512,
                                             step=32),
-                                            activation='relu'))
+                                            input_shape=self.input_shape))
+        model.add(layers.normalization.BatchNormalization())
+        model.add(layers.Activation("relu"))
         model.add(
             layers.Dropout(
                 rate=hp.Float(
@@ -101,20 +98,9 @@ class MyHyperModel(HyperModel):
                                             min_value=32,
                                             max_value=512,
                                             step=32),
-                                            activation='relu'))
-        model.add(
-            layers.Dropout(
-                rate=hp.Float(
-                    "dropout_1", min_value=0.0, max_value=0.5, default=0.25, step=0.01,
-                )
-            )
-        )
-        
-        model.add(layers.Dense(units=hp.Int('units',
-                                            min_value=32,
-                                            max_value=512,
-                                            step=32),
-                                            activation='relu'))
+                                            input_shape=self.input_shape))
+        model.add(layers.normalization.BatchNormalization())
+        model.add(layers.Activation("relu"))
         model.add(
             layers.Dropout(
                 rate=hp.Float(
