@@ -28,10 +28,16 @@ from kerastuner.tuners import Hyperband
 from sklearn import preprocessing
 
 # Ordial Encode of Categorical Value for input
-def prepare_inputs(X):
+def prepare_input(X):
 	oe = preprocessing.OrdinalEncoder()
 	oe.fit(X)
 	Output = oe.transform(X)
+	return Output
+    
+def prepare_target(Y):
+	le = preprocessing.LabelEncoder()
+	le.fit(Y)
+	Output = le.transform(Y)
 	return Output
 
 class MyHyperModel(HyperModel):
@@ -42,7 +48,7 @@ class MyHyperModel(HyperModel):
         if(num_classes == 2):
             self.val_acc = "val_binary_accuracy"
         else:
-            self.val_acc = "val_sparse_categorical_accuracy"
+            self.val_acc = "val_acc"
         
     def build(self, hp):
         # model build with hyperparameter tuning on all layers. Can be customized
@@ -120,7 +126,7 @@ class MyHyperModel(HyperModel):
             return model
             
         else:
-            model.add(layers.Dense(1, activation='softmax'))
+            model.add(layers.Dense(self.num_classes, activation='softmax'))
             model.compile(optimizer=keras.optimizers.Adam(
                 hp.Choice('learning_rate',
                           values=[1e-2, 1e-3, 1e-4,1e-5])),
@@ -131,12 +137,12 @@ class MyHyperModel(HyperModel):
 
 
 def model_train_hyperparam_tune(df,column_train_feature_name,num_classes,input_shape,
-    seed = 1, exe_per_trial = 2, max_epochs = 40, n_epoch_search = 100, output_dir = 'hyperparameter',project_name = 'Titanic'):
+    seed = 1, exe_per_trial = 2, max_epochs = 400, n_epoch_search = 1000, output_dir = 'hyperparameter',project_name = 'Rooms'):
     x = df.drop([column_train_feature_name], axis=1)
-    x = prepare_inputs(x)
+    x = prepare_input(x)
     y = df[column_train_feature_name]
     # reshape(-1,1) makes it a valid input for the model.
-    y = y.values.reshape(-1,1)
+    y = prepare_target(y)
     hypermodel = MyHyperModel(num_classes = num_classes,input_shape = input_shape)
   
     tuner = Hyperband(
@@ -159,4 +165,10 @@ def model_train_hyperparam_tune(df,column_train_feature_name,num_classes,input_s
     # Retrieve the best model.
     best_model = tuner.get_best_models(num_models=1)[0]
     best_model.save(str(project_name + ".h5"))
+    
+    model = keras.models.load_model(str(project_name + ".h5"))
+    score = model.evaluate(x, y, verbose=0)
+    print(model.metrics_names)
+    print(score)
+    
     

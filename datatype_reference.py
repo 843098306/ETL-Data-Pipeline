@@ -38,21 +38,23 @@ class Split(beam.DoFn):
     def process(self, element, header_array):
         Feature_list_raw = element.split(",")
         Feature_list = []
-        i = 0
-        while(i < len(Feature_list_raw)):
-            if(i == 2):
-                Feature_list.append(str(Feature_list_raw[i] + Feature_list_raw[i + 1]))
-                i += 2
-            else:
-                Feature_list.append(Feature_list_raw[i])
-                i += 1
+        
+        # Edge case
+        # i = 0
+        # while(i < len(Feature_list_raw)):
+            # if(i == 2):
+                # Feature_list.append(str(Feature_list_raw[i] + Feature_list_raw[i + 1]))
+                # i += 2
+            # else:
+                # Feature_list.append(Feature_list_raw[i])
+                # i += 1
             
         Output = {}
         for j in range(len(header_array)):
-            if(Feature_list[j] == "" or Feature_list[j] == " "):
+            if(Feature_list_raw[j] == "" or Feature_list_raw[j] == " "):
                 Output[header_array[j]] = "?"
             else:
-                Output[header_array[j]] = Feature_list[j]
+                Output[header_array[j]] = Feature_list_raw[j]
         return [Output]
         
         
@@ -116,7 +118,6 @@ def data_type_reference(argv=None, save_main_session=True):
     
   def feature_reference(value_counts):
     (index,counts,type) = value_counts
-    print((index,counts,type))
     if(counts == 2):
         return (index,"Boolean")
     elif(counts > 2 and counts <= 15):

@@ -85,10 +85,6 @@ def column_operation(datatype_filepath, known_args):
         if(feature_type == 'Boolean' or feature_type == 'Categorical' or feature_type == "Numeric"):
             column_train_feature_name.append(feature_name)
     
-    print(column_name_arr)
-    print(datatype_arr)
-    print(column_train_feature_name)
-    
     return column_name_arr,datatype_arr,column_train_feature_name,label_name
     
 def Convert_TFrecord_to_PandasDF(parsed_dataset,column_train_feature_name,column_name_arr):
@@ -108,5 +104,6 @@ def Convert_TFrecord_to_PandasDF(parsed_dataset,column_train_feature_name,column
                 pass
                 
         df = df.append(temp, ignore_index=True)
+    print(df.head(1))
         
     return df

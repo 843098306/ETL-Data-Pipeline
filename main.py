@@ -39,6 +39,7 @@ import tensorflow as tf
 import tensorflow_transform as tft
 import tensorflow_transform.beam as tft_beam
 import keras
+from keras.models import load_model
 from keras import models, layers
 from kerastuner import HyperModel
 from kerastuner.tuners import Hyperband
@@ -82,7 +83,7 @@ if __name__ == '__main__':
     
   # RAW_DATA_METADATA and other variables can be passed into the data_transform script
   from data_transform import *
-    
+  print(known_args.input, column_name_arr)
   transform_data(known_args,column_name_arr)
   
   filenames = [str(known_args.output + "_transformed-00000-of-00001")]
@@ -100,12 +101,7 @@ if __name__ == '__main__':
   df = Convert_TFrecord_to_PandasDF(parsed_dataset,column_train_feature_name,column_name_arr)
   
   # Train the model using Keras and tune the hyperparameters of the model using Keras tuner
-  model_train_hyperparam_tune(df,column_train_feature_name[-1],2,(len(column_train_feature_name) - 1,))
-  
-  model = models.load_model(str('Titanic' + ".h5"))
-  for layer in model.layers:
-    if len(layer.weights) > 0:
-        print(layer.name, layer.weights[0].shape)
+  model_train_hyperparam_tune(df,column_train_feature_name[-1],df[LABEL_KEY].nunique(),(len(column_train_feature_name) - 1,))
 
   
     
