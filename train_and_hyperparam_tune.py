@@ -5,14 +5,10 @@ import h5py
 import argparse
 import logging
 import re
-import tensorflow as tf
-import tensorflow_transform as tft
-import tensorflow_transform.beam as tft_beam
 import numpy as np
 import pandas as pd
 import os
 
-from past.builtins import unicode
 
 import apache_beam as beam
 from apache_beam.io import ReadFromText
@@ -21,6 +17,10 @@ from apache_beam.metrics import Metrics
 from apache_beam.metrics.metric import MetricsFilter
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
+
+import tensorflow as tf
+import tensorflow_transform as tft
+import tensorflow_transform.beam as tft_beam
 import keras
 from keras import models, layers
 from kerastuner import HyperModel

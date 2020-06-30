@@ -142,22 +142,5 @@ def data_type_reference(argv=None, save_main_session=True):
   result.wait_until_finish()
   
   return known_args
-  
-def extract_column_names(datatype_array,label_name):
-    category = []
-    numeric = []
-    string_arr = []
-    
-    for i in datatype_array:
-        (column_name,columntype) = i
-        if(column_name != label_name):
-            if(columntype == 'Boolean' or columntype == 'Categorical'):
-                category.append(column_name)
-            elif(columntype == 'String'):
-                string_arr.append(column_name)
-            else:
-                numeric.append(column_name)
-        else:
-            label = (column_name,columntype)
-            
-    return category,numeric,string_arr,label
+
+
