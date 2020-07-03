@@ -11,7 +11,7 @@ A ETL data pipeline for machine learning model.
 ## Setup
 
 ### Clone
-- clone this repo to local machine 
+- Clone this repo to local machine 
 
 ### Python Libraries 
 - Pandas
