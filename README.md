@@ -3,10 +3,10 @@ A ETL data pipeline for machine learning model.
 
 ## Table of Contents
 
-- .[Setup]
-- .[Features]
-- .[Usage]
-- .[License]
+- [Setup](#setup)
+- [Features](#features)
+- [Usage](#usage)
+- [License](#license)
 
 ## Setup
 ## Features
