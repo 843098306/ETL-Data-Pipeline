@@ -1,5 +1,14 @@
 # ETL-Data-Pipeline
 A ETL data pipeline for machine learning model.
 
-## Goal
-## Setting
+## Table of Contents
+
+- .[Setup]
+- .[Features]
+- .[Usage]
+- .[License]
+
+## Setup
+## Features
+## Usage
+## License
